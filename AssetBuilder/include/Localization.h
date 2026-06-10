@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-bool Localization_Load(const char* filePath);
+bool Localization_CompileStrings(const char* inputFile, const char* outputFile);
 
 void Localization_Destroy();
 

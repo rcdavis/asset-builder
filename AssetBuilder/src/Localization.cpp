@@ -1,9 +1,11 @@
 #include "Localization.h"
 
 #include <cassert>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <fstream>
 
 #include "Utils/Log.h"
 #include "simdjson.h"
@@ -16,10 +18,11 @@ enum PluralCategory : uint8_t {
 
 struct LocalizationEntry {
 	uint32_t firstForm = 0;
-	uint32_t formMask = 0;
+	uint32_t formCount = 0;
 };
 
 struct LocalizationForm {
+	uint32_t category = 0;
 	uint32_t offset = 0;
 	uint32_t length = 0;
 };
@@ -34,6 +37,14 @@ struct ParsedLocalizationEntry {
 	std::vector<ParsedLocalizationForm> forms;
 };
 
+struct LocalizationBinHeader {
+	char magic[4] = "LOC";
+	uint32_t version = 0;
+	uint32_t entryCount = 0;
+	uint32_t formCount = 0;
+	uint32_t stringPoolSize = 0;
+};
+
 static LocalizationEntry* s_entries = nullptr;
 static LocalizationForm* s_forms = nullptr;
 static char* s_stringData = nullptr;
@@ -43,11 +54,17 @@ static uint32_t s_formCount = 0;
 static uint32_t s_stringDataSize = 0;
 
 static bool Localization_ParseFile(const char* filePath, std::vector<ParsedLocalizationEntry>& entries);
+static bool Localization_ExportFile(const char* filePath, const std::vector<ParsedLocalizationEntry>& entries);
 
-bool Localization_Load(const char* filePath) {
+bool Localization_CompileStrings(const char* inputFile, const char* outputFile) {
 	std::vector<ParsedLocalizationEntry> parsedEntries;
-	if (!Localization_ParseFile(filePath, parsedEntries)) {
-		LOG_ERROR("Failed to parse localization file: {}", filePath);
+	if (!Localization_ParseFile(inputFile, parsedEntries)) {
+		LOG_ERROR("Failed to parse localization file: {}", inputFile);
+		return false;
+	}
+
+	if (!Localization_ExportFile(outputFile, parsedEntries)) {
+		LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", inputFile, outputFile);
 		return false;
 	}
 
@@ -146,6 +163,50 @@ static bool Localization_ParseFile(const char* filePath, std::vector<ParsedLocal
 			return false;
 		}
 	}
+
+	return true;
+}
+
+static bool Localization_ExportFile(const char* filePath, const std::vector<ParsedLocalizationEntry>& entries) {
+	std::vector<LocalizationEntry> locEntries;
+	std::vector<LocalizationForm> locForms;
+	std::vector<char> stringPool;
+
+	for (const auto& parsedEntry : entries) {
+		LocalizationEntry entry;
+		entry.firstForm = (uint32_t)std::size(locForms);
+		entry.formCount = (uint32_t)std::size(parsedEntry.forms);
+
+		for (const auto& parsedForm : parsedEntry.forms) {
+			LocalizationForm form;
+			form.category = (uint32_t)parsedForm.pluralCategory;
+			form.offset = (uint32_t)std::size(stringPool);
+			form.length = (uint32_t)std::size(parsedForm.text);
+
+			stringPool.insert(std::end(stringPool), std::cbegin(parsedForm.text), std::cend(parsedForm.text));
+			stringPool.push_back('\0');
+
+			locForms.push_back(std::move(form));
+		}
+
+		locEntries.push_back(std::move(entry));
+	}
+
+	std::ofstream file(filePath, std::ios::binary);
+	if (!file) {
+		LOG_ERROR("Failed to create file \"{}\"", filePath);
+		return false;
+	}
+
+	LocalizationBinHeader header;
+	header.entryCount = (uint32_t)std::size(locEntries);
+	header.formCount = (uint32_t)std::size(locForms);
+	header.stringPoolSize = (uint32_t)std::size(stringPool);
+
+	file.write((char*)&header, sizeof(LocalizationBinHeader));
+	file.write((char*)std::data(locEntries), std::size(locEntries) * sizeof(LocalizationEntry));
+	file.write((char*)std::data(locForms), std::size(locForms) * sizeof(LocalizationForm));
+	file.write(std::data(stringPool), std::size(stringPool));
 
 	return true;
 }
