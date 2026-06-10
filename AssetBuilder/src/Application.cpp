@@ -38,6 +38,8 @@ int Application::Run(int argc, char** argv) {
 
 		LOG_INFO("TextId 0: {}", Localization_GetString(0));
 		LOG_INFO("TextId 1: {}", Localization_GetString(1));
+		LOG_INFO("TextId 2 (count 1): {}", Localization_GetPlural(2, 1));
+		LOG_INFO("TextId 2 (count 2): {}", Localization_GetPlural(2, 2));
 	}
 
 	return 0;
