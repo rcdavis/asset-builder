@@ -57,6 +57,7 @@ static uint32_t s_stringDataSize = 0;
 static bool Localization_ParseFile(const char* filePath, std::vector<ParsedLocalizationEntry>& entries);
 static bool Localization_ExportFile(const char* filePath, const std::vector<ParsedLocalizationEntry>& entries);
 
+// TODO: Should handle multiple languages.
 static PluralCategory ConvertToPluralCategory(uint32_t count) {
 	if (count == 1)
 		return PluralCategory::One;
