@@ -2,6 +2,8 @@ project(AssetBuilder)
 
 add_executable(AssetBuilder
     src/Utils/Log.cpp
+    src/Application.cpp
+    src/Localization.cpp
     src/Main.cpp
 )
 
