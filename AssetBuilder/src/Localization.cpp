@@ -59,7 +59,7 @@ static bool Localization_ExportFile(const char* filePath, const std::vector<Pars
 bool Localization_CompileStrings(const char* inputFile, const char* outputFile) {
 	std::vector<ParsedLocalizationEntry> parsedEntries;
 	if (!Localization_ParseFile(inputFile, parsedEntries)) {
-		LOG_ERROR("Failed to parse localization file: {}", inputFile);
+		LOG_ERROR("Failed to parse localization file: \"{}\"", inputFile);
 		return false;
 	}
 
