@@ -2,13 +2,14 @@
 
 #include <cassert>
 #include <cstdint>
-#include <string>
 #include <string_view>
 #include <vector>
 #include <fstream>
 
 #include "Utils/Log.h"
+#include "fmt/base.h"
 #include "simdjson.h"
+#include "fmt/format.h"
 
 enum PluralCategory : uint8_t {
 	One,
@@ -55,6 +56,13 @@ static uint32_t s_stringDataSize = 0;
 
 static bool Localization_ParseFile(const char* filePath, std::vector<ParsedLocalizationEntry>& entries);
 static bool Localization_ExportFile(const char* filePath, const std::vector<ParsedLocalizationEntry>& entries);
+
+static PluralCategory ConvertToPluralCategory(uint32_t count) {
+	if (count == 1)
+		return PluralCategory::One;
+
+	return PluralCategory::Other;
+}
 
 bool Localization_CompileStrings(const char* inputFile, const char* outputFile) {
 	std::vector<ParsedLocalizationEntry> parsedEntries;
@@ -131,6 +139,28 @@ const char* Localization_GetString(uint32_t id) {
 	const LocalizationForm& form = s_forms[entry.firstForm];
 
 	return s_stringData + form.offset;
+}
+
+std::string Localization_GetPlural(uint32_t id, uint32_t count) {
+	assert(s_entries != nullptr && "Localization entries not loaded");
+	assert(s_forms != nullptr && "Localization forms not loaded");
+	assert(s_stringData != nullptr && "Localization string data not loaded");
+	assert(id < s_entryCount && "Invalid localization ID");
+
+	const PluralCategory category = ConvertToPluralCategory(count);
+
+	const LocalizationEntry& entry = s_entries[id];
+
+	for (uint32_t i = 0; i < entry.formCount; ++i) {
+		const LocalizationForm& form = s_forms[entry.firstForm + i];
+
+		if (form.category == category) {
+			const char* const str = s_stringData + form.offset;
+			return fmt::format(fmt::runtime(str), fmt::arg("count", count));
+		}
+	}
+
+	return {};
 }
 
 static bool Localization_ParseFile(const char* filePath, std::vector<ParsedLocalizationEntry>& entries) {
