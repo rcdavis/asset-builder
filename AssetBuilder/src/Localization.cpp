@@ -38,7 +38,7 @@ struct ParsedLocalizationEntry {
 };
 
 struct LocalizationBinHeader {
-	char magic[4] = "LOC";
+	char magic[4] {};
 	uint32_t version = 0;
 	uint32_t entryCount = 0;
 	uint32_t formCount = 0;
@@ -199,6 +199,7 @@ static bool Localization_ExportFile(const char* filePath, const std::vector<Pars
 	}
 
 	LocalizationBinHeader header;
+	memcpy(header.magic, "LOCB", 4);
 	header.entryCount = (uint32_t)std::size(locEntries);
 	header.formCount = (uint32_t)std::size(locForms);
 	header.stringPoolSize = (uint32_t)std::size(stringPool);
