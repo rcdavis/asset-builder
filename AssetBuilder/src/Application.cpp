@@ -33,7 +33,11 @@ int Application::Run(int argc, char** argv) {
 	}
 
 	if (localization->parsed()) {
-		Localization_Load(inputLocalizationFile.c_str());
+		Localization_CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
+		Localization_Load(outputBinaryFile.c_str());
+
+		LOG_INFO("TextId 0: {}", Localization_GetString(0));
+		LOG_INFO("TextId 1: {}", Localization_GetString(1));
 	}
 
 	return 0;
