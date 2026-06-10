@@ -1,0 +1,8 @@
+{
+	"MENU_FILE": "File",
+	"MENU_HELP": "Help",
+	"ITEM_COUNT": {
+		"one": "{count} item",
+		"other": "{count} items"
+	}
+}

@@ -7,7 +7,11 @@
 			"request": "launch",
 			"program": "${command:cmake.launchTargetPath}",
 			"args": [
-				"--help"
+				"localization",
+				"-i",
+				"res/strings/en.json",
+				"-o",
+				"res/strings.en.locbin"
 			],
 			"stopAtEntry": false,
 			"cwd": "${command:cmake.launchTargetDirectory}",

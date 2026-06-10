@@ -2,6 +2,8 @@ project(AssetBuilder)
 
 add_executable(AssetBuilder
     src/Utils/Log.cpp
+    src/Application.cpp
+    src/Localization.cpp
     src/Main.cpp
 )
 
@@ -35,4 +37,5 @@ target_compile_features(AssetBuilder PRIVATE cxx_std_20)
 target_link_libraries(AssetBuilder PRIVATE
     spdlog::spdlog_header_only
     CLI11::CLI11
+    simdjson
 )
