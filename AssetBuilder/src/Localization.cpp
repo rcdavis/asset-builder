@@ -71,6 +71,41 @@ bool Localization_CompileStrings(const char* inputFile, const char* outputFile) 
 	return true;
 }
 
+bool Localization_Load(const char* filePath) {
+	std::ifstream file(filePath, std::ios::binary);
+	if (!file) {
+		LOG_ERROR("Failed to open localization file \"{}\"", filePath);
+		return false;
+	}
+
+	LocalizationBinHeader header;
+	file.read((char*)&header, sizeof(LocalizationBinHeader));
+
+	if (memcmp(header.magic, "LOCB", 4) != 0) {
+		LOG_ERROR("Localization file \"{}\" doesn't have a valid signature", filePath);
+		return false;
+	}
+
+	Localization_Destroy();
+
+	s_entries = new LocalizationEntry[header.entryCount];
+	s_entryCount = header.entryCount;
+
+	file.read((char*)s_entries, header.entryCount * sizeof(LocalizationEntry));
+
+	s_forms = new LocalizationForm[header.formCount];
+	s_formCount = header.formCount;
+
+	file.read((char*)s_forms, header.formCount * sizeof(LocalizationForm));
+
+	s_stringData = new char[header.stringPoolSize];
+	s_stringDataSize = header.stringPoolSize;
+
+	file.read(s_stringData, header.stringPoolSize);
+
+	return true;
+}
+
 void Localization_Destroy() {
 	delete[] s_entries;
 	s_entries = nullptr;
