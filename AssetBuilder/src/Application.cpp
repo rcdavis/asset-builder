@@ -23,5 +23,7 @@ int Application::Run(int argc, char** argv) {
 		return app.exit(e);
 	}
 
+	Localization_Load("res/strings/en.json");
+
 	return 0;
 }
