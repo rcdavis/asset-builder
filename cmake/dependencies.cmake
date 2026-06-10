@@ -19,3 +19,10 @@ FetchContent_Declare(
     GIT_TAG v2.6.2
 )
 FetchContent_MakeAvailable(CLI11)
+
+FetchContent_Declare(
+  simdjson
+  GIT_REPOSITORY https://github.com/simdjson/simdjson.git
+  GIT_TAG v4.6.4
+)
+FetchContent_MakeAvailable(simdjson)
