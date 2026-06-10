@@ -1,0 +1,11 @@
+{
+	"C_Cpp.intelliSenseEngine": "disabled",
+	"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+	"clangd.arguments": [
+		"--background-index",
+		"--clang-tidy",
+		"--completion-style=detailed",
+		"--compile-commands-dir=${command:cmake.buildDirectory}",
+		"--query-driver=/usr/bin/g++"
+	]
+}
