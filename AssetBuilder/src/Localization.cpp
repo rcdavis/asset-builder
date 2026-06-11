@@ -297,8 +297,8 @@ namespace Localization {
 			return false;
 		}
 
-		headerFile << "/*\n";
-		headerFile << " * This header is auto generated\n";
+		headerFile << "/**\n";
+		headerFile << " * This file is auto generated. Any manual changes will be overridden.\n";
 		headerFile << " */\n";
 		headerFile << "#pragma once\n\n";
 		headerFile << "#include <cstdint>\n\n";
@@ -310,7 +310,37 @@ namespace Localization {
 		}
 
 		headerFile << "\tCount\n";
-		headerFile << "};\n";
+		headerFile << "};\n\n";
+
+		headerFile << "const char* ToString(TextId id);\n";
+
+		headerFile.close();
+
+		std::filesystem::path sourcePath = dir / "TextId.cpp";
+		std::ofstream sourceFile(sourcePath);
+		if (!sourceFile) {
+			LOG_ERROR("Failed to open source file for generated ids: {}", sourcePath.c_str());
+			return false;
+		}
+
+		sourceFile << "/**\n";
+		sourceFile << " * This file is auto generated. Any manual changes will be overridden.\n";
+		sourceFile << " */\n";
+		sourceFile << "#include \"TextId.h\"\n\n";
+
+		sourceFile << "const char* ToString(TextId id) {\n";
+		sourceFile << "\tswitch(id) {\n";
+
+		for (const auto& entry : entries) {
+			sourceFile << "\tcase " << entry.key << ":\n";
+			sourceFile << "\t\treturn \"" << entry.key << "\";\n\n";
+		}
+
+		sourceFile << "\tdefault:\n";
+		sourceFile << "\t\treturn nullptr;\n";
+		sourceFile << "\t}\n\n";
+		sourceFile << "\treturn nullptr;\n";
+		sourceFile << "}\n";
 
 		return true;
 	}
