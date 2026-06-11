@@ -7,7 +7,7 @@
 #include "Localization.h"
 
 Application::~Application() {
-	Localization_Destroy();
+	Localization::Destroy();
 }
 
 int Application::Run(int argc, char** argv) {
@@ -33,13 +33,13 @@ int Application::Run(int argc, char** argv) {
 	}
 
 	if (localization->parsed()) {
-		Localization_CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
-		Localization_Load(outputBinaryFile.c_str());
+		Localization::CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
+		Localization::Load(outputBinaryFile.c_str());
 
-		LOG_INFO("TextId 0: {}", Localization_GetString(0));
-		LOG_INFO("TextId 1: {}", Localization_GetString(1));
-		LOG_INFO("TextId 2 (count 1): {}", Localization_GetPlural(2, 1));
-		LOG_INFO("TextId 2 (count 2): {}", Localization_GetPlural(2, 2));
+		LOG_INFO("TextId 0: {}", Localization::GetString(0));
+		LOG_INFO("TextId 1: {}", Localization::GetString(1));
+		LOG_INFO("TextId 2 (count 1): {}", Localization::GetPlural(2, 1));
+		LOG_INFO("TextId 2 (count 2): {}", Localization::GetPlural(2, 2));
 	}
 
 	return 0;
