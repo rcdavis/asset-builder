@@ -138,7 +138,7 @@ namespace Localization {
 		s_stringDataSize = 0;
 	}
 
-	const char* GetString(uint32_t id) {
+	const char* GetString(TextId id) {
 		assert(s_entries != nullptr && "Localization entries not loaded");
 		assert(s_forms != nullptr && "Localization forms not loaded");
 		assert(s_stringData != nullptr && "Localization string data not loaded");
@@ -150,7 +150,7 @@ namespace Localization {
 		return s_stringData + form.offset;
 	}
 
-	std::string GetPlural(uint32_t id, uint32_t count) {
+	std::string GetPlural(TextId id, uint32_t count) {
 		assert(s_entries != nullptr && "Localization entries not loaded");
 		assert(s_forms != nullptr && "Localization forms not loaded");
 		assert(s_stringData != nullptr && "Localization string data not loaded");
@@ -287,7 +287,7 @@ namespace Localization {
 	}
 
 	static bool ExportTextIds(const char* sourceDir, const std::vector<ParsedEntry>& entries) {
-		std::filesystem::path dir = sourceDir;
+		std::filesystem::path dir = LOC_OUTPUT_DIR;
 		std::filesystem::create_directories(dir);
 
 		std::filesystem::path headerPath = dir / "TextId.h";
