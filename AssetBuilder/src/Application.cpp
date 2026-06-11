@@ -16,10 +16,12 @@ int Application::Run(int argc, char** argv) {
 
 	std::string inputLocalizationFile;
 	std::string outputBinaryFile;
+	std::string sourceDir;
 
 	auto* localization = app.add_subcommand("localization", "Commands for working with localization files");
 	localization->add_option("-i,--input", inputLocalizationFile, "Input localization file")->required();
 	localization->add_option("-o,--output", outputBinaryFile, "Output binary file")->required();
+	localization->add_option("--src-dir", sourceDir, "Output directory for generated source files")->required();
 
 	try {
 		app.parse(argc, argv);
@@ -33,7 +35,7 @@ int Application::Run(int argc, char** argv) {
 	}
 
 	if (localization->parsed()) {
-		Localization::CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
+		Localization::CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str(), sourceDir.c_str());
 		Localization::Load(outputBinaryFile.c_str());
 
 		LOG_INFO("TextId 0: {}", Localization::GetString(0));

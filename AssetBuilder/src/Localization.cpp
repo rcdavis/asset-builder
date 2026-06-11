@@ -5,6 +5,7 @@
 #include <string_view>
 #include <vector>
 #include <fstream>
+#include <filesystem>
 
 #include "Utils/Log.h"
 #include "fmt/base.h"
@@ -57,6 +58,7 @@ namespace Localization {
 
 	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries);
 	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries);
+	static bool ExportTextIds(const char* sourceDir, const std::vector<ParsedEntry>& entries);
 
 	// TODO: Should handle multiple languages.
 	static PluralCategory ConvertToPluralCategory(uint32_t count) {
@@ -66,7 +68,7 @@ namespace Localization {
 		return PluralCategory::Other;
 	}
 
-	bool CompileStrings(const char* inputFile, const char* outputFile) {
+	bool CompileStrings(const char* inputFile, const char* outputFile, const char* sourceDir) {
 		std::vector<ParsedEntry> parsedEntries;
 		if (!ParseFile(inputFile, parsedEntries)) {
 			LOG_ERROR("Failed to parse localization file: \"{}\"", inputFile);
@@ -75,6 +77,11 @@ namespace Localization {
 
 		if (!ExportFile(outputFile, parsedEntries)) {
 			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", inputFile, outputFile);
+			return false;
+		}
+
+		if (!ExportTextIds(sourceDir, parsedEntries)) {
+			LOG_ERROR("Failed to generate TextId source files");
 			return false;
 		}
 
@@ -275,6 +282,35 @@ namespace Localization {
 		file.write((char*)std::data(locEntries), std::size(locEntries) * sizeof(Entry));
 		file.write((char*)std::data(locForms), std::size(locForms) * sizeof(Form));
 		file.write(std::data(stringPool), std::size(stringPool));
+
+		return true;
+	}
+
+	static bool ExportTextIds(const char* sourceDir, const std::vector<ParsedEntry>& entries) {
+		std::filesystem::path dir = sourceDir;
+		std::filesystem::create_directories(dir);
+
+		std::filesystem::path headerPath = dir / "TextId.h";
+		std::ofstream headerFile(headerPath);
+		if (!headerFile) {
+			LOG_ERROR("Failed to open header file for generated ids: {}", headerPath.c_str());
+			return false;
+		}
+
+		headerFile << "/*\n";
+		headerFile << " * This header is auto generated\n";
+		headerFile << " */\n";
+		headerFile << "#pragma once\n\n";
+		headerFile << "#include <cstdint>\n\n";
+
+		headerFile << "enum TextId : uint32_t {\n";
+
+		for (const auto& entry : entries) {
+			headerFile << "\t" << entry.key << ",\n";
+		}
+
+		headerFile << "\tCount\n";
+		headerFile << "};\n";
 
 		return true;
 	}

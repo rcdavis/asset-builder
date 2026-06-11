@@ -4,7 +4,7 @@
 #include <string>
 
 namespace Localization {
-	bool CompileStrings(const char* inputFile, const char* outputFile);
+	bool CompileStrings(const char* inputFile, const char* outputFile, const char* sourceDir);
 
 	bool Load(const char* filePath);
 
