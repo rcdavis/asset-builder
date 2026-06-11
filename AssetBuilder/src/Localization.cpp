@@ -58,7 +58,7 @@ namespace Localization {
 
 	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries);
 	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries);
-	static bool ExportTextIds(const char* sourceDir, const std::vector<ParsedEntry>& entries);
+	static bool ExportTextIds(const std::vector<ParsedEntry>& entries);
 
 	// TODO: Should handle multiple languages.
 	static PluralCategory ConvertToPluralCategory(uint32_t count) {
@@ -68,7 +68,7 @@ namespace Localization {
 		return PluralCategory::Other;
 	}
 
-	bool CompileStrings(const char* inputFile, const char* outputFile, const char* sourceDir) {
+	bool CompileStrings(const char* inputFile, const char* outputFile) {
 		std::vector<ParsedEntry> parsedEntries;
 		if (!ParseFile(inputFile, parsedEntries)) {
 			LOG_ERROR("Failed to parse localization file: \"{}\"", inputFile);
@@ -80,7 +80,7 @@ namespace Localization {
 			return false;
 		}
 
-		if (!ExportTextIds(sourceDir, parsedEntries)) {
+		if (!ExportTextIds(parsedEntries)) {
 			LOG_ERROR("Failed to generate TextId source files");
 			return false;
 		}
@@ -286,7 +286,7 @@ namespace Localization {
 		return true;
 	}
 
-	static bool ExportTextIds(const char* sourceDir, const std::vector<ParsedEntry>& entries) {
+	static bool ExportTextIds(const std::vector<ParsedEntry>& entries) {
 		std::filesystem::path dir = LOC_OUTPUT_DIR;
 		std::filesystem::create_directories(dir);
 

@@ -11,9 +11,7 @@
 				"-i",
 				"res/strings/en.json",
 				"-o",
-				"res/strings/en.locbin",
-				"--src-dir",
-				"Generated/Localization"
+				"res/strings/en.locbin"
 			],
 			"stopAtEntry": false,
 			"cwd": "${command:cmake.launchTargetDirectory}",
