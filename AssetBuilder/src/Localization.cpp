@@ -5,6 +5,7 @@
 #include <string_view>
 #include <vector>
 #include <fstream>
+#include <filesystem>
 
 #include "Utils/Log.h"
 #include "fmt/base.h"
@@ -57,6 +58,7 @@ namespace Localization {
 
 	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries);
 	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries);
+	static bool ExportTextIds(const std::vector<ParsedEntry>& entries);
 
 	// TODO: Should handle multiple languages.
 	static PluralCategory ConvertToPluralCategory(uint32_t count) {
@@ -75,6 +77,11 @@ namespace Localization {
 
 		if (!ExportFile(outputFile, parsedEntries)) {
 			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", inputFile, outputFile);
+			return false;
+		}
+
+		if (!ExportTextIds(parsedEntries)) {
+			LOG_ERROR("Failed to generate TextId source files");
 			return false;
 		}
 
@@ -131,7 +138,7 @@ namespace Localization {
 		s_stringDataSize = 0;
 	}
 
-	const char* GetString(uint32_t id) {
+	const char* GetString(TextId id) {
 		assert(s_entries != nullptr && "Localization entries not loaded");
 		assert(s_forms != nullptr && "Localization forms not loaded");
 		assert(s_stringData != nullptr && "Localization string data not loaded");
@@ -143,7 +150,7 @@ namespace Localization {
 		return s_stringData + form.offset;
 	}
 
-	std::string GetPlural(uint32_t id, uint32_t count) {
+	std::string GetPlural(TextId id, uint32_t count) {
 		assert(s_entries != nullptr && "Localization entries not loaded");
 		assert(s_forms != nullptr && "Localization forms not loaded");
 		assert(s_stringData != nullptr && "Localization string data not loaded");
@@ -275,6 +282,65 @@ namespace Localization {
 		file.write((char*)std::data(locEntries), std::size(locEntries) * sizeof(Entry));
 		file.write((char*)std::data(locForms), std::size(locForms) * sizeof(Form));
 		file.write(std::data(stringPool), std::size(stringPool));
+
+		return true;
+	}
+
+	static bool ExportTextIds(const std::vector<ParsedEntry>& entries) {
+		std::filesystem::path dir = LOC_OUTPUT_DIR;
+		std::filesystem::create_directories(dir);
+
+		std::filesystem::path headerPath = dir / "TextId.h";
+		std::ofstream headerFile(headerPath);
+		if (!headerFile) {
+			LOG_ERROR("Failed to open header file for generated ids: {}", headerPath.c_str());
+			return false;
+		}
+
+		headerFile << "/**\n";
+		headerFile << " * This file is auto generated. Any manual changes will be overridden.\n";
+		headerFile << " */\n";
+		headerFile << "#pragma once\n\n";
+		headerFile << "#include <cstdint>\n\n";
+
+		headerFile << "enum TextId : uint32_t {\n";
+
+		for (const auto& entry : entries) {
+			headerFile << "\t" << entry.key << ",\n";
+		}
+
+		headerFile << "\tCount\n";
+		headerFile << "};\n\n";
+
+		headerFile << "const char* ToString(TextId id);\n";
+
+		headerFile.close();
+
+		std::filesystem::path sourcePath = dir / "TextId.cpp";
+		std::ofstream sourceFile(sourcePath);
+		if (!sourceFile) {
+			LOG_ERROR("Failed to open source file for generated ids: {}", sourcePath.c_str());
+			return false;
+		}
+
+		sourceFile << "/**\n";
+		sourceFile << " * This file is auto generated. Any manual changes will be overridden.\n";
+		sourceFile << " */\n";
+		sourceFile << "#include \"TextId.h\"\n\n";
+
+		sourceFile << "const char* ToString(TextId id) {\n";
+		sourceFile << "\tswitch(id) {\n";
+
+		for (const auto& entry : entries) {
+			sourceFile << "\tcase " << entry.key << ":\n";
+			sourceFile << "\t\treturn \"" << entry.key << "\";\n\n";
+		}
+
+		sourceFile << "\tdefault:\n";
+		sourceFile << "\t\treturn nullptr;\n";
+		sourceFile << "\t}\n\n";
+		sourceFile << "\treturn nullptr;\n";
+		sourceFile << "}\n";
 
 		return true;
 	}
