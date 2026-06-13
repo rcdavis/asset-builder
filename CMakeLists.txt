@@ -7,3 +7,4 @@ include(cmake/ProjectConfig.cmake)
 
 add_subdirectory(Common)
 add_subdirectory(AssetBuilder)
+add_subdirectory(Game)
