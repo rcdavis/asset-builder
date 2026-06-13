@@ -4,4 +4,5 @@ project(AssetBuilder VERSION 1.0.0 LANGUAGES CXX)
 
 include(cmake/dependencies.cmake)
 
+add_subdirectory(Common)
 add_subdirectory(AssetBuilder)
