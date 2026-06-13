@@ -5,6 +5,7 @@ set(LOC_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Generated/strings)
 
 add_executable(Game
     ${LOC_OUTPUT_DIR}/TextId.cpp
+    src/Game.cpp
     src/Main.cpp
 )
 

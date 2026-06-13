@@ -1,10 +1,10 @@
 
 #include "Utils/Log.h"
+#include "Game.h"
 
 int main(int argc, char** argv) {
 	Log::Init("Game");
 
-	LOG_INFO("Starting Game...");
-
-	return 0;
+	Game game;
+	return game.Run(argc, argv);
 }
