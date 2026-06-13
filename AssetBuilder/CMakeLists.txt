@@ -5,7 +5,6 @@ set(LOC_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Generated/strings)
 
 add_executable(AssetBuilder
     ${LOC_OUTPUT_DIR}/TextId.cpp
-    src/Utils/Log.cpp
     src/Application.cpp
     src/Localization.cpp
     src/Main.cpp
@@ -44,6 +43,7 @@ target_include_directories(AssetBuilder PUBLIC
 target_compile_features(AssetBuilder PRIVATE cxx_std_20)
 
 target_link_libraries(AssetBuilder PRIVATE
+    Common
     spdlog::spdlog_header_only
     CLI11::CLI11
     simdjson

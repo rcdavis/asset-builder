@@ -4,7 +4,7 @@
 #include "Application.h"
 
 int main(int argc, char** argv) {
-	Log::Init();
+	Log::Init("AssetBuilder");
 
 	Application app;
 	return app.Run(argc, argv);

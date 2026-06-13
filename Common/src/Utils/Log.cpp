@@ -1,5 +1,6 @@
 #include "Utils/Log.h"
 
+#include <cstdio>
 #include <vector>
 
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -7,15 +8,18 @@
 
 std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
 
-void Log::Init() {
+void Log::Init(const char* tag) {
+	char tagBuffer[32] {};
+	snprintf(tagBuffer, sizeof(tagBuffer), "%s.log", tag);
+
 	std::vector<spdlog::sink_ptr> logSinks;
 	logSinks.emplace_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>());
-	logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("AssetBuilder.log", true));
+	logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(tagBuffer, true));
 
 	logSinks[0]->set_pattern("%^[%T] %n: %v%$");
 	logSinks[1]->set_pattern("[%T] [%l] %n: %v");
 
-	s_CoreLogger = std::make_shared<spdlog::logger>("AssetBuilder", std::cbegin(logSinks), std::cend(logSinks));
+	s_CoreLogger = std::make_shared<spdlog::logger>(tag, std::cbegin(logSinks), std::cend(logSinks));
 	s_CoreLogger->set_level(spdlog::level::trace);
 	s_CoreLogger->flush_on(spdlog::level::trace);
 	spdlog::register_logger(s_CoreLogger);
