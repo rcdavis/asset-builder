@@ -5,7 +5,7 @@
 
 class Log {
 public:
-	static void Init();
+	static void Init(const char* tag);
 
 	static std::shared_ptr<spdlog::logger>& GetCoreLogger() { return s_CoreLogger; }
 
