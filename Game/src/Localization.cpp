@@ -103,10 +103,7 @@ namespace Localization {
 		assert(s_stringData != nullptr && "Localization string data not loaded");
 		assert(id < s_entryCount && "Invalid localization ID");
 
-		const Entry& entry = s_entries[id];
-		const Form& form = s_forms[entry.firstForm];
-
-		return s_stringData + form.offset;
+		return s_stringData + s_forms[s_entries[id].firstForm].offset;
 	}
 
 	std::string GetPlural(TextId id, uint32_t count) {
