@@ -5,5 +5,5 @@ public:
 	Game() = default;
 	~Game();
 
-	int Run(int argc, char** argv);
+	bool Run();
 };

@@ -6,5 +6,7 @@ int main(int argc, char** argv) {
 	Log::Init("Game");
 
 	Game game;
-	return game.Run(argc, argv);
+	game.Run();
+
+	return 0;
 }
