@@ -27,7 +27,6 @@ namespace Localization {
 	struct Form {
 		uint32_t category = 0;
 		uint32_t offset = 0;
-		uint32_t length = 0;
 	};
 
 	struct ParsedForm {
@@ -255,7 +254,6 @@ namespace Localization {
 				Form form;
 				form.category = (uint32_t)parsedForm.pluralCategory;
 				form.offset = (uint32_t)std::size(stringPool);
-				form.length = (uint32_t)std::size(parsedForm.text);
 
 				stringPool.insert(std::end(stringPool), std::cbegin(parsedForm.text), std::cend(parsedForm.text));
 				stringPool.push_back('\0');
