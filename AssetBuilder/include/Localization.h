@@ -1,9 +1,11 @@
 #pragma once
 
+#include <filesystem>
+
 namespace Localization {
 	bool CompileStrings(const char* inputFile, const char* outputFile);
 
-	bool Load(const char* filePath);
+	bool BuildResources(const std::filesystem::path& resDir, const std::filesystem::path& outputDir);
 
 	void Destroy();
 }

@@ -8,9 +8,7 @@
 #include <filesystem>
 
 #include "Utils/Log.h"
-#include "fmt/base.h"
 #include "simdjson.h"
-#include "fmt/format.h"
 
 namespace Localization {
 	enum PluralCategory : uint8_t {
@@ -87,37 +85,32 @@ namespace Localization {
 		return true;
 	}
 
-	bool Load(const char* filePath) {
-		std::ifstream file(filePath, std::ios::binary);
-		if (!file) {
-			LOG_ERROR("Failed to open localization file \"{}\"", filePath);
+	bool BuildResources(const std::filesystem::path& resDir, const std::filesystem::path& outputDir) {
+		if (!std::filesystem::is_directory(resDir)) {
+			LOG_ERROR("Passed in path isn't a directory: {}", resDir.c_str());
 			return false;
 		}
 
-		BinHeader header;
-		file.read((char*)&header, sizeof(BinHeader));
+		// TODO: Handle multiple languages
+		const std::filesystem::path stringsFile = resDir / "strings/en.json";
 
-		if (memcmp(header.magic, "LOCB", 4) != 0) {
-			LOG_ERROR("Localization file \"{}\" doesn't have a valid signature", filePath);
+		if (!std::filesystem::exists(stringsFile)) {
+			LOG_ERROR("Strings file doesn't exist: {}", stringsFile.c_str());
 			return false;
 		}
 
-		Destroy();
+		std::vector<ParsedEntry> parsedEntries;
+		if (!ParseFile(stringsFile.c_str(), parsedEntries)) {
+			LOG_ERROR("Failed to parse localization file: \"{}\"", stringsFile.c_str());
+			return false;
+		}
 
-		s_entries = new Entry[header.entryCount];
-		s_entryCount = header.entryCount;
+		const std::filesystem::path locbinFile = outputDir / "strings/en.locbin";
 
-		file.read((char*)s_entries, header.entryCount * sizeof(Entry));
-
-		s_forms = new Form[header.formCount];
-		s_formCount = header.formCount;
-
-		file.read((char*)s_forms, header.formCount * sizeof(Form));
-
-		s_stringData = new char[header.stringPoolSize];
-		s_stringDataSize = header.stringPoolSize;
-
-		file.read(s_stringData, header.stringPoolSize);
+		if (!ExportFile(locbinFile.c_str(), parsedEntries)) {
+			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", stringsFile.c_str(), locbinFile.c_str());
+			return false;
+		}
 
 		return true;
 	}

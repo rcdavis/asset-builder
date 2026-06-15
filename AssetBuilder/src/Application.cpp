@@ -14,12 +14,12 @@ int Application::Run(int argc, char** argv) {
 	CLI::App app("Program for building and converting game assets");
 	app.set_version_flag("-V,--version", "1.0.0");
 
-	std::string inputLocalizationFile;
-	std::string outputBinaryFile;
+	std::string resDir;
+	std::string outputDir;
 
 	auto* localization = app.add_subcommand("localization", "Commands for working with localization files");
-	localization->add_option("-i,--input", inputLocalizationFile, "Input localization file")->required();
-	localization->add_option("-o,--output", outputBinaryFile, "Output binary file")->required();
+	localization->add_option("-i,--input", resDir, "Input resource directory")->required();
+	localization->add_option("-o,--output", outputDir, "Output resource directory")->required();
 
 	try {
 		app.parse(argc, argv);
@@ -33,8 +33,8 @@ int Application::Run(int argc, char** argv) {
 	}
 
 	if (localization->parsed()) {
-		Localization::CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
-		Localization::Load(outputBinaryFile.c_str());
+		Localization::BuildResources(resDir, outputDir);
+		//Localization::CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
 	}
 
 	return 0;
