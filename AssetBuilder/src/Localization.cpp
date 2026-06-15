@@ -137,40 +137,6 @@ namespace Localization {
 		s_stringDataSize = 0;
 	}
 
-	const char* GetString(TextId id) {
-		assert(s_entries != nullptr && "Localization entries not loaded");
-		assert(s_forms != nullptr && "Localization forms not loaded");
-		assert(s_stringData != nullptr && "Localization string data not loaded");
-		assert(id < s_entryCount && "Invalid localization ID");
-
-		const Entry& entry = s_entries[id];
-		const Form& form = s_forms[entry.firstForm];
-
-		return s_stringData + form.offset;
-	}
-
-	std::string GetPlural(TextId id, uint32_t count) {
-		assert(s_entries != nullptr && "Localization entries not loaded");
-		assert(s_forms != nullptr && "Localization forms not loaded");
-		assert(s_stringData != nullptr && "Localization string data not loaded");
-		assert(id < s_entryCount && "Invalid localization ID");
-
-		const PluralCategory category = ConvertToPluralCategory(count);
-
-		const Entry& entry = s_entries[id];
-
-		for (uint32_t i = 0; i < entry.formCount; ++i) {
-			const Form& form = s_forms[entry.firstForm + i];
-
-			if (form.category == category) {
-				const char* const str = s_stringData + form.offset;
-				return fmt::format(fmt::runtime(str), fmt::arg("count", count));
-			}
-		}
-
-		return {};
-	}
-
 	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries) {
 		simdjson::ondemand::parser parser;
 		auto json = simdjson::padded_string::load(filePath);

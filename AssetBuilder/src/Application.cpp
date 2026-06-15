@@ -3,7 +3,6 @@
 #include <string>
 
 #include "CLI/CLI.hpp"
-#include "TextId.h"
 #include "Utils/Log.h"
 #include "Localization.h"
 
@@ -36,11 +35,6 @@ int Application::Run(int argc, char** argv) {
 	if (localization->parsed()) {
 		Localization::CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
 		Localization::Load(outputBinaryFile.c_str());
-
-		LOG_INFO("TextId {}: {}", ToString(TextId::MENU_FILE), Localization::GetString(TextId::MENU_FILE));
-		LOG_INFO("TextId {}: {}", ToString(TextId::MENU_HELP), Localization::GetString(TextId::MENU_HELP));
-		LOG_INFO("TextId {} (count 1): {}", ToString(TextId::ITEM_COUNT), Localization::GetPlural(TextId::ITEM_COUNT, 1));
-		LOG_INFO("TextId {} (count 2): {}", ToString(TextId::ITEM_COUNT), Localization::GetPlural(TextId::ITEM_COUNT, 2));
 	}
 
 	return 0;
