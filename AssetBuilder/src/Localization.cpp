@@ -8,9 +8,7 @@
 #include <filesystem>
 
 #include "Utils/Log.h"
-#include "fmt/base.h"
 #include "simdjson.h"
-#include "fmt/format.h"
 
 namespace Localization {
 	enum PluralCategory : uint8_t {
@@ -47,17 +45,10 @@ namespace Localization {
 		uint32_t stringPoolSize = 0;
 	};
 
-	static Entry* s_entries = nullptr;
-	static Form* s_forms = nullptr;
-	static char* s_stringData = nullptr;
-
-	static uint32_t s_entryCount = 0;
-	static uint32_t s_formCount = 0;
-	static uint32_t s_stringDataSize = 0;
-
-	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries);
-	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries);
-	static bool ExportTextIds(const std::vector<ParsedEntry>& entries);
+	static bool ParseStringsFile(const char* filePath, std::vector<ParsedEntry>& entries);
+	static bool ExportLocbinFile(const char* filePath, const std::vector<ParsedEntry>& entries);
+	static bool ExportTextIdsHeader(const std::filesystem::path& headerPath, const std::vector<ParsedEntry>& entries);
+	static bool ExportTextIdsSource(const std::filesystem::path& sourcePath, const std::vector<ParsedEntry>& entries);
 
 	// TODO: Should handle multiple languages.
 	static PluralCategory ConvertToPluralCategory(uint32_t count) {
@@ -67,111 +58,51 @@ namespace Localization {
 		return PluralCategory::Other;
 	}
 
-	bool CompileStrings(const char* inputFile, const char* outputFile) {
+	bool BuildResources(const std::filesystem::path& resDir, const std::filesystem::path& outputDir) {
+		if (!std::filesystem::is_directory(resDir)) {
+			LOG_ERROR("Passed in path isn't a directory: {}", resDir.c_str());
+			return false;
+		}
+
+		// TODO: Handle multiple languages
+		const std::filesystem::path stringsFile = resDir / "strings/en.json";
+
+		if (!std::filesystem::exists(stringsFile)) {
+			LOG_ERROR("Strings file doesn't exist: {}", stringsFile.c_str());
+			return false;
+		}
+
 		std::vector<ParsedEntry> parsedEntries;
-		if (!ParseFile(inputFile, parsedEntries)) {
-			LOG_ERROR("Failed to parse localization file: \"{}\"", inputFile);
+		if (!ParseStringsFile(stringsFile.c_str(), parsedEntries)) {
+			LOG_ERROR("Failed to parse localization file: \"{}\"", stringsFile.c_str());
 			return false;
 		}
 
-		if (!ExportFile(outputFile, parsedEntries)) {
-			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", inputFile, outputFile);
+		const std::filesystem::path locbinFile = outputDir / "strings/en.locbin";
+		if (!ExportLocbinFile(locbinFile.c_str(), parsedEntries)) {
+			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", stringsFile.c_str(), locbinFile.c_str());
 			return false;
 		}
 
-		if (!ExportTextIds(parsedEntries)) {
-			LOG_ERROR("Failed to generate TextId source files");
+		std::filesystem::path dir = LOC_OUTPUT_DIR;
+		std::filesystem::create_directories(dir);
+
+		const std::filesystem::path headerPath = dir / "TextId.h";
+		if (!ExportTextIdsHeader(headerPath, parsedEntries)) {
+			LOG_ERROR("Failed to generate TextId header file: {}", headerPath.c_str());
+			return false;
+		}
+
+		const std::filesystem::path sourcePath = dir / "TextId.cpp";
+		if (!ExportTextIdsSource(sourcePath, parsedEntries)) {
+			LOG_ERROR("Failed to generate TextId source file: {}", sourcePath.c_str());
 			return false;
 		}
 
 		return true;
 	}
 
-	bool Load(const char* filePath) {
-		std::ifstream file(filePath, std::ios::binary);
-		if (!file) {
-			LOG_ERROR("Failed to open localization file \"{}\"", filePath);
-			return false;
-		}
-
-		BinHeader header;
-		file.read((char*)&header, sizeof(BinHeader));
-
-		if (memcmp(header.magic, "LOCB", 4) != 0) {
-			LOG_ERROR("Localization file \"{}\" doesn't have a valid signature", filePath);
-			return false;
-		}
-
-		Destroy();
-
-		s_entries = new Entry[header.entryCount];
-		s_entryCount = header.entryCount;
-
-		file.read((char*)s_entries, header.entryCount * sizeof(Entry));
-
-		s_forms = new Form[header.formCount];
-		s_formCount = header.formCount;
-
-		file.read((char*)s_forms, header.formCount * sizeof(Form));
-
-		s_stringData = new char[header.stringPoolSize];
-		s_stringDataSize = header.stringPoolSize;
-
-		file.read(s_stringData, header.stringPoolSize);
-
-		return true;
-	}
-
-	void Destroy() {
-		delete[] s_entries;
-		s_entries = nullptr;
-
-		delete[] s_forms;
-		s_forms = nullptr;
-
-		delete[] s_stringData;
-		s_stringData = nullptr;
-
-		s_entryCount = 0;
-		s_formCount = 0;
-		s_stringDataSize = 0;
-	}
-
-	const char* GetString(TextId id) {
-		assert(s_entries != nullptr && "Localization entries not loaded");
-		assert(s_forms != nullptr && "Localization forms not loaded");
-		assert(s_stringData != nullptr && "Localization string data not loaded");
-		assert(id < s_entryCount && "Invalid localization ID");
-
-		const Entry& entry = s_entries[id];
-		const Form& form = s_forms[entry.firstForm];
-
-		return s_stringData + form.offset;
-	}
-
-	std::string GetPlural(TextId id, uint32_t count) {
-		assert(s_entries != nullptr && "Localization entries not loaded");
-		assert(s_forms != nullptr && "Localization forms not loaded");
-		assert(s_stringData != nullptr && "Localization string data not loaded");
-		assert(id < s_entryCount && "Invalid localization ID");
-
-		const PluralCategory category = ConvertToPluralCategory(count);
-
-		const Entry& entry = s_entries[id];
-
-		for (uint32_t i = 0; i < entry.formCount; ++i) {
-			const Form& form = s_forms[entry.firstForm + i];
-
-			if (form.category == category) {
-				const char* const str = s_stringData + form.offset;
-				return fmt::format(fmt::runtime(str), fmt::arg("count", count));
-			}
-		}
-
-		return {};
-	}
-
-	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries) {
+	static bool ParseStringsFile(const char* filePath, std::vector<ParsedEntry>& entries) {
 		simdjson::ondemand::parser parser;
 		auto json = simdjson::padded_string::load(filePath);
 		auto doc = parser.iterate(json);
@@ -240,10 +171,15 @@ namespace Localization {
 		return true;
 	}
 
-	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries) {
+	static bool ExportLocbinFile(const char* filePath, const std::vector<ParsedEntry>& entries) {
 		std::vector<Entry> locEntries;
+		locEntries.reserve(std::size(entries));
+
 		std::vector<Form> locForms;
+		locForms.reserve(std::size(entries));
+
 		std::vector<char> stringPool;
+		stringPool.reserve(std::size(entries));
 
 		for (const auto& parsedEntry : entries) {
 			Entry entry;
@@ -284,61 +220,58 @@ namespace Localization {
 		return true;
 	}
 
-	static bool ExportTextIds(const std::vector<ParsedEntry>& entries) {
-		std::filesystem::path dir = LOC_OUTPUT_DIR;
-		std::filesystem::create_directories(dir);
-
-		std::filesystem::path headerPath = dir / "TextId.h";
-		std::ofstream headerFile(headerPath);
-		if (!headerFile) {
+	static bool ExportTextIdsHeader(const std::filesystem::path& headerPath, const std::vector<ParsedEntry>& entries) {
+		std::ofstream file(headerPath);
+		if (!file) {
 			LOG_ERROR("Failed to open header file for generated ids: {}", headerPath.c_str());
 			return false;
 		}
 
-		headerFile << "/**\n";
-		headerFile << " * This file is auto generated. Any manual changes will be overridden.\n";
-		headerFile << " */\n";
-		headerFile << "#pragma once\n\n";
-		headerFile << "#include <cstdint>\n\n";
+		file << "/**\n";
+		file << " * This file is auto generated. Any manual changes will be overridden.\n";
+		file << " */\n";
+		file << "#pragma once\n\n";
+		file << "#include <cstdint>\n\n";
 
-		headerFile << "enum TextId : uint32_t {\n";
+		file << "enum TextId : uint32_t {\n";
 
 		for (const auto& entry : entries) {
-			headerFile << "\t" << entry.key << ",\n";
+			file << "\t" << entry.key << ",\n";
 		}
 
-		headerFile << "\tCount\n";
-		headerFile << "};\n\n";
+		file << "\tCount\n";
+		file << "};\n\n";
 
-		headerFile << "const char* ToString(TextId id);\n";
+		file << "const char* TextIdToString(TextId id);\n";
 
-		headerFile.close();
+		return true;
+	}
 
-		std::filesystem::path sourcePath = dir / "TextId.cpp";
-		std::ofstream sourceFile(sourcePath);
-		if (!sourceFile) {
+	static bool ExportTextIdsSource(const std::filesystem::path& sourcePath, const std::vector<ParsedEntry>& entries) {
+		std::ofstream file(sourcePath);
+		if (!file) {
 			LOG_ERROR("Failed to open source file for generated ids: {}", sourcePath.c_str());
 			return false;
 		}
 
-		sourceFile << "/**\n";
-		sourceFile << " * This file is auto generated. Any manual changes will be overridden.\n";
-		sourceFile << " */\n";
-		sourceFile << "#include \"TextId.h\"\n\n";
+		file << "/**\n";
+		file << " * This file is auto generated. Any manual changes will be overridden.\n";
+		file << " */\n";
+		file << "#include \"TextId.h\"\n\n";
 
-		sourceFile << "const char* ToString(TextId id) {\n";
-		sourceFile << "\tswitch(id) {\n";
+		file << "const char* TextIdToString(TextId id) {\n";
+		file << "\tswitch(id) {\n";
 
 		for (const auto& entry : entries) {
-			sourceFile << "\tcase " << entry.key << ":\n";
-			sourceFile << "\t\treturn \"" << entry.key << "\";\n\n";
+			file << "\tcase " << entry.key << ":\n";
+			file << "\t\treturn \"" << entry.key << "\";\n\n";
 		}
 
-		sourceFile << "\tdefault:\n";
-		sourceFile << "\t\treturn nullptr;\n";
-		sourceFile << "\t}\n\n";
-		sourceFile << "\treturn nullptr;\n";
-		sourceFile << "}\n";
+		file << "\tdefault:\n";
+		file << "\t\treturn nullptr;\n";
+		file << "\t}\n\n";
+		file << "\treturn nullptr;\n";
+		file << "}\n";
 
 		return true;
 	}

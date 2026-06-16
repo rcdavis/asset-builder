@@ -4,7 +4,6 @@ set(LOC_INPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/res/strings)
 set(LOC_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Generated/strings)
 
 add_executable(AssetBuilder
-    ${LOC_OUTPUT_DIR}/TextId.cpp
     src/Application.cpp
     src/Localization.cpp
     src/Main.cpp

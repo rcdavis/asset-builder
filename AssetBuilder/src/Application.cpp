@@ -3,24 +3,22 @@
 #include <string>
 
 #include "CLI/CLI.hpp"
-#include "TextId.h"
 #include "Utils/Log.h"
 #include "Localization.h"
 
 Application::~Application() {
-	Localization::Destroy();
 }
 
 int Application::Run(int argc, char** argv) {
 	CLI::App app("Program for building and converting game assets");
 	app.set_version_flag("-V,--version", "1.0.0");
 
-	std::string inputLocalizationFile;
-	std::string outputBinaryFile;
+	std::string resDir;
+	std::string outputDir;
 
 	auto* localization = app.add_subcommand("localization", "Commands for working with localization files");
-	localization->add_option("-i,--input", inputLocalizationFile, "Input localization file")->required();
-	localization->add_option("-o,--output", outputBinaryFile, "Output binary file")->required();
+	localization->add_option("-i,--input", resDir, "Input resource directory")->required();
+	localization->add_option("-o,--output", outputDir, "Output resource directory")->required();
 
 	try {
 		app.parse(argc, argv);
@@ -34,13 +32,7 @@ int Application::Run(int argc, char** argv) {
 	}
 
 	if (localization->parsed()) {
-		Localization::CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
-		Localization::Load(outputBinaryFile.c_str());
-
-		LOG_INFO("TextId {}: {}", ToString(TextId::MENU_FILE), Localization::GetString(TextId::MENU_FILE));
-		LOG_INFO("TextId {}: {}", ToString(TextId::MENU_HELP), Localization::GetString(TextId::MENU_HELP));
-		LOG_INFO("TextId {} (count 1): {}", ToString(TextId::ITEM_COUNT), Localization::GetPlural(TextId::ITEM_COUNT, 1));
-		LOG_INFO("TextId {} (count 2): {}", ToString(TextId::ITEM_COUNT), Localization::GetPlural(TextId::ITEM_COUNT, 2));
+		Localization::BuildResources(resDir, outputDir);
 	}
 
 	return 0;

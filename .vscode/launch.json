@@ -9,9 +9,9 @@
 			"args": [
 				"localization",
 				"-i",
-				"res/strings/en.json",
+				"res",
 				"-o",
-				"res/strings/en.locbin"
+				"res"
 			],
 			"stopAtEntry": false,
 			"cwd": "${command:cmake.launchTargetDirectory}",

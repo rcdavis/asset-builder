@@ -2,7 +2,7 @@
 	"MENU_FILE": "File",
 	"MENU_HELP": "Help",
 	"ITEM_COUNT": {
-		"one": "{count} item",
-		"other": "{count} items"
+		"one": "There is {count} item",
+		"other": "There are {count} items"
 	}
 }

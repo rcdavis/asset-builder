@@ -1,19 +1,7 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
-
-#include "TextId.h"
+#include <filesystem>
 
 namespace Localization {
-	bool CompileStrings(const char* inputFile, const char* outputFile);
-
-	bool Load(const char* filePath);
-
-	void Destroy();
-
-	// TODO: Create TextId
-	const char* GetString(TextId id);
-
-	std::string GetPlural(TextId id, uint32_t count);
+	bool BuildResources(const std::filesystem::path& resDir, const std::filesystem::path& outputDir);
 }
