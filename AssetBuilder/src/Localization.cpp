@@ -45,14 +45,6 @@ namespace Localization {
 		uint32_t stringPoolSize = 0;
 	};
 
-	static Entry* s_entries = nullptr;
-	static Form* s_forms = nullptr;
-	static char* s_stringData = nullptr;
-
-	static uint32_t s_entryCount = 0;
-	static uint32_t s_formCount = 0;
-	static uint32_t s_stringDataSize = 0;
-
 	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries);
 	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries);
 	static bool ExportTextIds(const std::vector<ParsedEntry>& entries);
@@ -113,21 +105,6 @@ namespace Localization {
 		}
 
 		return true;
-	}
-
-	void Destroy() {
-		delete[] s_entries;
-		s_entries = nullptr;
-
-		delete[] s_forms;
-		s_forms = nullptr;
-
-		delete[] s_stringData;
-		s_stringData = nullptr;
-
-		s_entryCount = 0;
-		s_formCount = 0;
-		s_stringDataSize = 0;
 	}
 
 	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries) {
@@ -201,8 +178,13 @@ namespace Localization {
 
 	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries) {
 		std::vector<Entry> locEntries;
+		locEntries.reserve(std::size(entries));
+
 		std::vector<Form> locForms;
+		locForms.reserve(std::size(entries));
+
 		std::vector<char> stringPool;
+		stringPool.reserve(std::size(entries));
 
 		for (const auto& parsedEntry : entries) {
 			Entry entry;

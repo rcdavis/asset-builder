@@ -7,7 +7,6 @@
 #include "Localization.h"
 
 Application::~Application() {
-	Localization::Destroy();
 }
 
 int Application::Run(int argc, char** argv) {
