@@ -48,6 +48,8 @@ namespace Localization {
 	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries);
 	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries);
 	static bool ExportTextIds(const std::vector<ParsedEntry>& entries);
+	static bool ExportTextIdsHeader(const std::filesystem::path& headerPath, const std::vector<ParsedEntry>& entries);
+	static bool ExportTextIdsSource(const std::filesystem::path& sourcePath, const std::vector<ParsedEntry>& entries);
 
 	// TODO: Should handle multiple languages.
 	static PluralCategory ConvertToPluralCategory(uint32_t count) {
@@ -101,6 +103,11 @@ namespace Localization {
 
 		if (!ExportFile(locbinFile.c_str(), parsedEntries)) {
 			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", stringsFile.c_str(), locbinFile.c_str());
+			return false;
+		}
+
+		if (!ExportTextIds(parsedEntries)) {
+			LOG_ERROR("Failed to export TextId: {}", stringsFile.c_str());
 			return false;
 		}
 
@@ -229,57 +236,73 @@ namespace Localization {
 		std::filesystem::path dir = LOC_OUTPUT_DIR;
 		std::filesystem::create_directories(dir);
 
-		std::filesystem::path headerPath = dir / "TextId.h";
-		std::ofstream headerFile(headerPath);
-		if (!headerFile) {
+		const std::filesystem::path headerPath = dir / "TextId.h";
+		if (!ExportTextIdsHeader(headerPath, entries)) {
+			LOG_ERROR("Failed to generate TextId header file: {}", headerPath.c_str());
+			return false;
+		}
+
+		const std::filesystem::path sourcePath = dir / "TextId.cpp";
+		if (!ExportTextIdsSource(sourcePath, entries)) {
+			LOG_ERROR("Failed to generate TextId source file: {}", sourcePath.c_str());
+			return false;
+		}
+
+		return true;
+	}
+
+	static bool ExportTextIdsHeader(const std::filesystem::path& headerPath, const std::vector<ParsedEntry>& entries) {
+		std::ofstream file(headerPath);
+		if (!file) {
 			LOG_ERROR("Failed to open header file for generated ids: {}", headerPath.c_str());
 			return false;
 		}
 
-		headerFile << "/**\n";
-		headerFile << " * This file is auto generated. Any manual changes will be overridden.\n";
-		headerFile << " */\n";
-		headerFile << "#pragma once\n\n";
-		headerFile << "#include <cstdint>\n\n";
+		file << "/**\n";
+		file << " * This file is auto generated. Any manual changes will be overridden.\n";
+		file << " */\n";
+		file << "#pragma once\n\n";
+		file << "#include <cstdint>\n\n";
 
-		headerFile << "enum TextId : uint32_t {\n";
+		file << "enum TextId : uint32_t {\n";
 
 		for (const auto& entry : entries) {
-			headerFile << "\t" << entry.key << ",\n";
+			file << "\t" << entry.key << ",\n";
 		}
 
-		headerFile << "\tCount\n";
-		headerFile << "};\n\n";
+		file << "\tCount\n";
+		file << "};\n\n";
 
-		headerFile << "const char* ToString(TextId id);\n";
+		file << "const char* TextIdToString(TextId id);\n";
 
-		headerFile.close();
+		return true;
+	}
 
-		std::filesystem::path sourcePath = dir / "TextId.cpp";
-		std::ofstream sourceFile(sourcePath);
-		if (!sourceFile) {
+	static bool ExportTextIdsSource(const std::filesystem::path& sourcePath, const std::vector<ParsedEntry>& entries) {
+		std::ofstream file(sourcePath);
+		if (!file) {
 			LOG_ERROR("Failed to open source file for generated ids: {}", sourcePath.c_str());
 			return false;
 		}
 
-		sourceFile << "/**\n";
-		sourceFile << " * This file is auto generated. Any manual changes will be overridden.\n";
-		sourceFile << " */\n";
-		sourceFile << "#include \"TextId.h\"\n\n";
+		file << "/**\n";
+		file << " * This file is auto generated. Any manual changes will be overridden.\n";
+		file << " */\n";
+		file << "#include \"TextId.h\"\n\n";
 
-		sourceFile << "const char* ToString(TextId id) {\n";
-		sourceFile << "\tswitch(id) {\n";
+		file << "const char* TextIdToString(TextId id) {\n";
+		file << "\tswitch(id) {\n";
 
 		for (const auto& entry : entries) {
-			sourceFile << "\tcase " << entry.key << ":\n";
-			sourceFile << "\t\treturn \"" << entry.key << "\";\n\n";
+			file << "\tcase " << entry.key << ":\n";
+			file << "\t\treturn \"" << entry.key << "\";\n\n";
 		}
 
-		sourceFile << "\tdefault:\n";
-		sourceFile << "\t\treturn nullptr;\n";
-		sourceFile << "\t}\n\n";
-		sourceFile << "\treturn nullptr;\n";
-		sourceFile << "}\n";
+		file << "\tdefault:\n";
+		file << "\t\treturn nullptr;\n";
+		file << "\t}\n\n";
+		file << "\treturn nullptr;\n";
+		file << "}\n";
 
 		return true;
 	}
