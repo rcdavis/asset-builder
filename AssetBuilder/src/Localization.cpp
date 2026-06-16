@@ -45,9 +45,8 @@ namespace Localization {
 		uint32_t stringPoolSize = 0;
 	};
 
-	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries);
-	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries);
-	static bool ExportTextIds(const std::vector<ParsedEntry>& entries);
+	static bool ParseStringsFile(const char* filePath, std::vector<ParsedEntry>& entries);
+	static bool ExportLocbinFile(const char* filePath, const std::vector<ParsedEntry>& entries);
 	static bool ExportTextIdsHeader(const std::filesystem::path& headerPath, const std::vector<ParsedEntry>& entries);
 	static bool ExportTextIdsSource(const std::filesystem::path& sourcePath, const std::vector<ParsedEntry>& entries);
 
@@ -57,26 +56,6 @@ namespace Localization {
 			return PluralCategory::One;
 
 		return PluralCategory::Other;
-	}
-
-	bool CompileStrings(const char* inputFile, const char* outputFile) {
-		std::vector<ParsedEntry> parsedEntries;
-		if (!ParseFile(inputFile, parsedEntries)) {
-			LOG_ERROR("Failed to parse localization file: \"{}\"", inputFile);
-			return false;
-		}
-
-		if (!ExportFile(outputFile, parsedEntries)) {
-			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", inputFile, outputFile);
-			return false;
-		}
-
-		if (!ExportTextIds(parsedEntries)) {
-			LOG_ERROR("Failed to generate TextId source files");
-			return false;
-		}
-
-		return true;
 	}
 
 	bool BuildResources(const std::filesystem::path& resDir, const std::filesystem::path& outputDir) {
@@ -94,27 +73,36 @@ namespace Localization {
 		}
 
 		std::vector<ParsedEntry> parsedEntries;
-		if (!ParseFile(stringsFile.c_str(), parsedEntries)) {
+		if (!ParseStringsFile(stringsFile.c_str(), parsedEntries)) {
 			LOG_ERROR("Failed to parse localization file: \"{}\"", stringsFile.c_str());
 			return false;
 		}
 
 		const std::filesystem::path locbinFile = outputDir / "strings/en.locbin";
-
-		if (!ExportFile(locbinFile.c_str(), parsedEntries)) {
+		if (!ExportLocbinFile(locbinFile.c_str(), parsedEntries)) {
 			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", stringsFile.c_str(), locbinFile.c_str());
 			return false;
 		}
 
-		if (!ExportTextIds(parsedEntries)) {
-			LOG_ERROR("Failed to export TextId: {}", stringsFile.c_str());
+		std::filesystem::path dir = LOC_OUTPUT_DIR;
+		std::filesystem::create_directories(dir);
+
+		const std::filesystem::path headerPath = dir / "TextId.h";
+		if (!ExportTextIdsHeader(headerPath, parsedEntries)) {
+			LOG_ERROR("Failed to generate TextId header file: {}", headerPath.c_str());
+			return false;
+		}
+
+		const std::filesystem::path sourcePath = dir / "TextId.cpp";
+		if (!ExportTextIdsSource(sourcePath, parsedEntries)) {
+			LOG_ERROR("Failed to generate TextId source file: {}", sourcePath.c_str());
 			return false;
 		}
 
 		return true;
 	}
 
-	static bool ParseFile(const char* filePath, std::vector<ParsedEntry>& entries) {
+	static bool ParseStringsFile(const char* filePath, std::vector<ParsedEntry>& entries) {
 		simdjson::ondemand::parser parser;
 		auto json = simdjson::padded_string::load(filePath);
 		auto doc = parser.iterate(json);
@@ -183,7 +171,7 @@ namespace Localization {
 		return true;
 	}
 
-	static bool ExportFile(const char* filePath, const std::vector<ParsedEntry>& entries) {
+	static bool ExportLocbinFile(const char* filePath, const std::vector<ParsedEntry>& entries) {
 		std::vector<Entry> locEntries;
 		locEntries.reserve(std::size(entries));
 
@@ -228,25 +216,6 @@ namespace Localization {
 		file.write((char*)std::data(locEntries), std::size(locEntries) * sizeof(Entry));
 		file.write((char*)std::data(locForms), std::size(locForms) * sizeof(Form));
 		file.write(std::data(stringPool), std::size(stringPool));
-
-		return true;
-	}
-
-	static bool ExportTextIds(const std::vector<ParsedEntry>& entries) {
-		std::filesystem::path dir = LOC_OUTPUT_DIR;
-		std::filesystem::create_directories(dir);
-
-		const std::filesystem::path headerPath = dir / "TextId.h";
-		if (!ExportTextIdsHeader(headerPath, entries)) {
-			LOG_ERROR("Failed to generate TextId header file: {}", headerPath.c_str());
-			return false;
-		}
-
-		const std::filesystem::path sourcePath = dir / "TextId.cpp";
-		if (!ExportTextIdsSource(sourcePath, entries)) {
-			LOG_ERROR("Failed to generate TextId source file: {}", sourcePath.c_str());
-			return false;
-		}
 
 		return true;
 	}

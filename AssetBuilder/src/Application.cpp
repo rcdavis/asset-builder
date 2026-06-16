@@ -33,7 +33,6 @@ int Application::Run(int argc, char** argv) {
 
 	if (localization->parsed()) {
 		Localization::BuildResources(resDir, outputDir);
-		//Localization::CompileStrings(inputLocalizationFile.c_str(), outputBinaryFile.c_str());
 	}
 
 	return 0;
