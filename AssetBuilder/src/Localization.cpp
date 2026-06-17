@@ -78,7 +78,7 @@ namespace Localization {
 			return false;
 		}
 
-		const std::filesystem::path locbinFile = outputDir / "Assets/strings/en.locbin";
+		const std::filesystem::path locbinFile = outputDir / "assets/strings/en.locbin";
 		std::filesystem::create_directories(locbinFile.parent_path());
 
 		if (!ExportLocbinFile(locbinFile.c_str(), parsedEntries)) {
@@ -86,15 +86,15 @@ namespace Localization {
 			return false;
 		}
 
-		std::filesystem::create_directories(outputDir / "Generated");
+		std::filesystem::create_directories(outputDir / "generated");
 
-		const std::filesystem::path headerPath = outputDir / "Generated/TextId.h";
+		const std::filesystem::path headerPath = outputDir / "generated/TextId.h";
 		if (!ExportTextIdsHeader(headerPath, parsedEntries)) {
 			LOG_ERROR("Failed to generate TextId header file: {}", headerPath.c_str());
 			return false;
 		}
 
-		const std::filesystem::path sourcePath = outputDir / "Generated/TextId.cpp";
+		const std::filesystem::path sourcePath = outputDir / "generated/TextId.cpp";
 		if (!ExportTextIdsSource(sourcePath, parsedEntries)) {
 			LOG_ERROR("Failed to generate TextId source file: {}", sourcePath.c_str());
 			return false;
