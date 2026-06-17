@@ -58,7 +58,7 @@ namespace Localization {
 		return PluralCategory::Other;
 	}
 
-	bool BuildResources(const std::filesystem::path& resDir, const std::filesystem::path& outputDir) {
+	bool BuildResources(const std::filesystem::path& resDir, const std::filesystem::path& outputDir, const std::filesystem::path& genDir) {
 		if (!std::filesystem::is_directory(resDir)) {
 			LOG_ERROR("Passed in path isn't a directory: {}", resDir.c_str());
 			return false;
@@ -78,7 +78,7 @@ namespace Localization {
 			return false;
 		}
 
-		const std::filesystem::path locbinFile = outputDir / "assets/strings/en.locbin";
+		const std::filesystem::path locbinFile = outputDir / "strings/en.locbin";
 		std::filesystem::create_directories(locbinFile.parent_path());
 
 		if (!ExportLocbinFile(locbinFile.c_str(), parsedEntries)) {
@@ -86,15 +86,15 @@ namespace Localization {
 			return false;
 		}
 
-		std::filesystem::create_directories(outputDir / "generated");
+		std::filesystem::create_directories(genDir);
 
-		const std::filesystem::path headerPath = outputDir / "generated/TextId.h";
+		const std::filesystem::path headerPath = genDir / "TextId.h";
 		if (!ExportTextIdsHeader(headerPath, parsedEntries)) {
 			LOG_ERROR("Failed to generate TextId header file: {}", headerPath.c_str());
 			return false;
 		}
 
-		const std::filesystem::path sourcePath = outputDir / "generated/TextId.cpp";
+		const std::filesystem::path sourcePath = genDir / "TextId.cpp";
 		if (!ExportTextIdsSource(sourcePath, parsedEntries)) {
 			LOG_ERROR("Failed to generate TextId source file: {}", sourcePath.c_str());
 			return false;

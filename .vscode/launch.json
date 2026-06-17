@@ -11,7 +11,9 @@
 				"-i",
 				"${workspaceFolder}/assets",
 				"-o",
-				"${command:cmake.buildDirectory}"
+				"${command:cmake.buildDirectory}/Game/assets",
+				"-g",
+				"${command:cmake.buildDirectory}/generated"
 			],
 			"stopAtEntry": false,
 			"cwd": "${command:cmake.launchTargetDirectory}",
