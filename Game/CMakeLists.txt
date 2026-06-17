@@ -1,6 +1,5 @@
 project(Game)
 
-set(LOC_INPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/res/strings)
 set(GENERATED_OUTPUT_DIR ${CMAKE_BINARY_DIR}/generated)
 
 add_executable(Game
