@@ -15,6 +15,8 @@ file(GLOB_RECURSE ASSET_FILES
 
 add_custom_command(
     OUTPUT "${CMAKE_BINARY_DIR}/.assets_stamp"
+            "${GENERATED_OUTPUT_DIR}/TextId.h"
+            "${GENERATED_OUTPUT_DIR}/TextId.cpp"
 
     COMMAND $<TARGET_FILE:AssetBuilder> localization
             -i "${CMAKE_SOURCE_DIR}/assets"
