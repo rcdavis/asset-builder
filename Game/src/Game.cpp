@@ -11,7 +11,7 @@ Game::~Game() {
 bool Game::Run() {
 	LOG_INFO("Started Game...");
 
-	constexpr const char* locFile = "res/strings/en.locbin";
+	constexpr const char* locFile = "assets/strings/en.locbin";
 
 	if (!Localization::Load(locFile)) {
 		LOG_ERROR("Failed to load locbin file \"{}\"", locFile);
