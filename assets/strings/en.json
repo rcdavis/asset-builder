@@ -1,6 +1,7 @@
 {
 	"MENU_FILE": "File",
 	"MENU_HELP": "Help",
+	"MENU_QUIT": "Quit",
 	"ITEM_COUNT": {
 		"one": "There is {count} item",
 		"other": "There are {count} items"

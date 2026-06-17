@@ -15,10 +15,12 @@ int Application::Run(int argc, char** argv) {
 
 	std::string resDir;
 	std::string outputDir;
+	std::string genDir;
 
 	auto* localization = app.add_subcommand("localization", "Commands for working with localization files");
 	localization->add_option("-i,--input", resDir, "Input resource directory")->required();
 	localization->add_option("-o,--output", outputDir, "Output resource directory")->required();
+	localization->add_option("-g,--generated", genDir, "Output generated directory")->required();
 
 	try {
 		app.parse(argc, argv);
@@ -32,7 +34,7 @@ int Application::Run(int argc, char** argv) {
 	}
 
 	if (localization->parsed()) {
-		Localization::BuildResources(resDir, outputDir);
+		Localization::BuildResources(resDir, outputDir, genDir);
 	}
 
 	return 0;
