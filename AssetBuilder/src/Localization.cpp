@@ -78,22 +78,23 @@ namespace Localization {
 			return false;
 		}
 
-		const std::filesystem::path locbinFile = outputDir / "strings/en.locbin";
+		const std::filesystem::path locbinFile = outputDir / "Assets/strings/en.locbin";
+		std::filesystem::create_directories(locbinFile.parent_path());
+
 		if (!ExportLocbinFile(locbinFile.c_str(), parsedEntries)) {
 			LOG_ERROR("Failed to export localization file \"{}\" to \"{}\"", stringsFile.c_str(), locbinFile.c_str());
 			return false;
 		}
 
-		std::filesystem::path dir = LOC_OUTPUT_DIR;
-		std::filesystem::create_directories(dir);
+		std::filesystem::create_directories(outputDir / "Generated");
 
-		const std::filesystem::path headerPath = dir / "TextId.h";
+		const std::filesystem::path headerPath = outputDir / "Generated/TextId.h";
 		if (!ExportTextIdsHeader(headerPath, parsedEntries)) {
 			LOG_ERROR("Failed to generate TextId header file: {}", headerPath.c_str());
 			return false;
 		}
 
-		const std::filesystem::path sourcePath = dir / "TextId.cpp";
+		const std::filesystem::path sourcePath = outputDir / "Generated/TextId.cpp";
 		if (!ExportTextIdsSource(sourcePath, parsedEntries)) {
 			LOG_ERROR("Failed to generate TextId source file: {}", sourcePath.c_str());
 			return false;

@@ -9,9 +9,9 @@
 			"args": [
 				"localization",
 				"-i",
-				"res",
+				"${workspaceFolder}/Assets",
 				"-o",
-				"res"
+				"${command:cmake.buildDirectory}"
 			],
 			"stopAtEntry": false,
 			"cwd": "${command:cmake.launchTargetDirectory}",
